@@ -13,72 +13,64 @@ class AuthController extends Controller
 {
     public function register(RegisterUserRequest $request)
     {
-        try{
-
+        try {
             $validatedData = $request->validated();
-
             $validatedData['password'] = Hash::make($request->password);
             $createdUser = User::create($validatedData);
             $token = $createdUser->createToken('Authentication Token for '. $createdUser->email)->plainTextToken;
             return response()->json([
                 'status_code' => 201,
                 'message' => 'success!',
-                'token' =>  $token
-            ]);
-
-        }catch(Throwable $e){
+                'token' => $token
+            ], 201);
+        } catch (Throwable $e) {
             return response()->json([
-                'status' => 'failed!',
+                'status_code' => 500,
                 'message' => $e->getMessage()
-            ]);
+            ], 500);
         }
-    
     }
 
     public function login(LoginUserRequest $request)
     {
-        try{
-
+        try {
             $validatedData = $request->validated();
-
             $user = User::where('email', $request->email)->first();
 
-            if (!$user && !Hash::check($request->password, $user->password)) {
+            if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status_code' => 401,
                     'message' => 'The provided credentials do not match.'
-                ]);
+                ], 401);
             } else {
                 $token = $user->createToken('Token')->plainTextToken;
                 return response()->json([
                     'status_code' => 200,
                     'message' => 'Login successful!',
                     'token' => $token
-                ]);
+                ], 200);
             }
-
-        }catch(Throwable $e){
+        } catch (Throwable $e) {
             return response()->json([
-                'status' => 'Failed',
-                'message' -> $e->getMessage()
-            ]);
+                'status_code' => 500,
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        
     }
 
     public function logout(Request $request)
     {
-        try{
+        try {
             auth()->user()->tokens()->delete();
             return response()->json([
                 'message' => 'Logged out successfully!'
-            ]);
-        }catch(Throwable $e){
+            ], 200);
+        } catch (Throwable $e) {
             return response()->json([
+                'status_code' => 500,
                 'error' => $e->getMessage(),
-                'message' => "Logout failed",
-            ]);
+                'message' => "Logout failed"
+            ], 500);
         }
     }
 }
